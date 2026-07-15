@@ -1,0 +1,16 @@
+{
+  "name": "chaiprofessional",
+  "version": "1.0.0",
+  "description": "a  backened in at chai aur code youtube channel",
+  "main": "index.js",
+  "scripts": {
+   "start":"node index.js"
+  },
+  "keywords": [
+    "javascript",
+    "backened",
+    "chai"
+  ],
+  "author": "\"Mujahid\"",
+  "license": "ISC"
+}
