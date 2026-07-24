@@ -1,4 +1,6 @@
 import mongoose from"mongoose"
+const { Schema } = mongoose
+
 const videoSchema=new Schema(
     {
         videoFile:{
@@ -31,7 +33,7 @@ const videoSchema=new Schema(
         },
         isPublished:{
             type:Boolean,
-            deefault:true
+             default:true
 
         },
         owner:{
@@ -43,7 +45,7 @@ const videoSchema=new Schema(
 
     },
     {
-        timestamp:true
+         timestamps:true
     }
 )
 export const Video=mongoose.model("Video",videoSchema)

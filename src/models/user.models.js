@@ -2,6 +2,8 @@ import mongoose from "mongoose"
 import mongooseaggregatepaginate from "mongoose-aggregate-paginate-v2"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+const { Schema } = mongoose;
+
 const userSchema=new Schema(
     {
         username:{
@@ -47,28 +49,28 @@ const userSchema=new Schema(
         refreshToken:{
             type:String
 
-        },
-        timestamp:true
-
-
-}
+        }
+    },
+    {
+        timestamps:true
+    }
 )
-userSchema.pre("save",async function(next){
+userSchema.pre("save", async function(){
 
     
-    if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return;
 
 
-    this.password=bcrypt.hash(this.password,10)
-    next()
+    this.password=await bcrypt.hash(this.password,10)
 
 
 })
 userSchema.methods.isPasswordCorrect=async function (password){
+    
      return  bcrypt.compare(password,this.password)
 } 
 userSchema.methods.generateAccessToken=function(){
-    jwt.sign({
+    return jwt.sign({
         _id:this._id,
         email:this.email,
         username:this.username,
@@ -82,7 +84,7 @@ userSchema.methods.generateAccessToken=function(){
 )
 }
 userSchema.methods.generateRefreshToken=function(){
-    wt.sign({
+    return jwt.sign({
         _id:this._id,
        
     },
@@ -94,5 +96,5 @@ userSchema.methods.generateRefreshToken=function(){
 )
 
 }
-videoSchema.plugin(mongooseaggregatepaginate)
+userSchema.plugin(mongooseaggregatepaginate)
 export const User=mongoose.model("User",userSchema)

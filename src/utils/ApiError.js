@@ -3,16 +3,15 @@ class ApiError extends Error{
         statusCode,
         messages="Something went wrong",
         error=[],
-        statck=""
+        stack=""
     ){
         super(messages)
         this.statusCode=statusCode
         this.data=null
-        this.message=this.message
-        this.sucess=false;
-        this.errors=errors
-        if(statck){
-            this.stack=statck
+        this.success=false;
+        this.errors=error
+        if(stack){
+            this.stack=stack
 
 
         }
@@ -22,4 +21,4 @@ class ApiError extends Error{
 
     }
 }
-export {ApiError}
+export   {ApiError}
