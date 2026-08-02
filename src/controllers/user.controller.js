@@ -255,7 +255,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
       return res.status(200)
       .json(200,req.user, "current user fectching sucesssfully ")
     })
-    const updateCurrentUser=asyncHandler(async(req,res)=>{
+    const updateAccountDetilstUser=asyncHandler(async(req,res)=>{
       const {fullname,email}=req.body
       if(!fullname && !email){
         throw new ApiError(400,"Atleast one field is required to update")
@@ -339,7 +339,7 @@ export {
   refreshAccessToken,
   changeCurrentPassword,
   getCurrentUser,
-  updateCurrentUser,
+  updateAccountDetilstUser,
   updateUserAvatar,
   updateUsercoverImage
 
