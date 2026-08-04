@@ -9,6 +9,8 @@ app.use(cookieParser())
 import userRouter from "./routes/user.routes.js"   
 // route declaration
 app.use("/api/v1/user",userRouter)  
+// Keep the plural form available for clients using /api/v1/users.
+app.use("/api/v1/users", userRouter)
 // http:localhost :8000/api/v1/users/register
 
 // Return API errors as JSON instead of Express's default HTML error page.

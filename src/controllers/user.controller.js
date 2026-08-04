@@ -4,6 +4,7 @@ import {User} from "../models/user.models.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiRespnse.js";
 import jwt from  "jsonwebtoken"
+import mongoose from "mongoose"
 
 
 
@@ -156,8 +157,8 @@ const logoutUser=asyncHandler(async(req,res)=>{
      await User.findByIdAndUpdate(
       req.user._id,
       {
-        $set:{
-          refreshToken:undefined
+        $unset:{
+          refreshToken:1
         }
       },
       {
@@ -184,7 +185,7 @@ const logoutUser=asyncHandler(async(req,res)=>{
 
 const refreshAccessToken=asyncHandler(async(req,res)=>{
 
-    const IncomingRefreshToken=req.cookies.refreshToken || req.body.refreshToken
+    const IncomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
 
     if(!IncomingRefreshToken){
       throw new ApiError(401,"unauthoriized request")
@@ -212,7 +213,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
      return res
      .status(200)
      .cookie("accessToken",accessToken,options)
-     .ccokie("refreshToken",newrefreshToken,options)
+     .cookie("refreshToken",newrefreshToken,options)
      .json(
        new ApiResponse(
          200,
@@ -234,7 +235,10 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
      }
 })
  const changeCurrentPassword=asyncHandler(async(req,res)=>{
-  const{oldPassword,newPassword}=req.body
+  const { oldPassword, newPassword } = req.body || {}
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "oldPassword and newPassword are required")
+  }
   const user=await User.findById(req.user?._id)
   const isPasswordCorrect=await user.isPasswordCorrect(oldPassword)
 
@@ -253,19 +257,19 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     const getCurrentUser=asyncHandler(async(req,res)=>{
 
       return res.status(200)
-      .json(200,req.user, "current user fectching sucesssfully ")
+      .json(new ApiResponse(200,req.user, "Current user fetched successfully"))
     })
     const updateAccountDetailstUser=asyncHandler(async(req,res)=>{
       const {fullname,email}=req.body
       if(!fullname && !email){
         throw new ApiError(400,"Atleast one field is required to update")
       }   
-      const user=User.findByIdAndUpdate( 
+      const user=await User.findByIdAndUpdate( 
         req.user?._id,
       {
         $set:{
-          fullName,
-          email:email
+          ...(fullname !== undefined ? { fullname } : {}),
+          ...(email !== undefined ? { email: email.trim().toLowerCase() } : {})
         }
       },
         
@@ -283,7 +287,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"Avatar file is required ")
        }  
        const avatar=await uploadOnCloudinary(avatarLocalPath)
-       if(!avatar.url){
+       if(!avatar?.secure_url){
         throw new ApiError(500,"Avatar upload failed")
       }
 
@@ -291,7 +295,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         req.user?._id,
         {
           $set:{
-            avatar:avatar.url
+             avatar:avatar.secure_url
 
           }
         },
@@ -310,15 +314,15 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"coverImage file is required ")
        }  
        const coverImage=await uploadOnCloudinary(coverImageLocalPath)
-       if(!coverImage.url){
+       if(!coverImage?.secure_url){
         throw new ApiError(500,"coverImage is missing ")
       }
 
-      await User.findByIdAndUpdate(
+      const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
           $set:{
-            coverImage:coverImage.url
+            coverImage:coverImage.secure_url
 
           }
         },
@@ -338,7 +342,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"username is required")
       }
 
-    await User.aggregate([
+    const channel = await User.aggregate([
       {
         $match:{username:username?.toLowerCase()
 
@@ -347,7 +351,7 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
       {
         $lookup:{
           from:"subscriptions",
-          localfield:"_id",
+           localField:"_id",
           foreignField:"channel",
           as:"subscribers"
 
@@ -356,19 +360,17 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
       {
         $lookup:{
                from:"subscriptions",
-          localfield:"_id",
+           localField:"_id",
           foreignField:"subscriber",
           as:"subscribedTo"
       }
     },
     {
-      $addFields:{
-        subscribersCount:{$size:"$subscribers"},
-        channelsSubscribedToCount:{$size:"$subscribedTo"}
-      },
-      isSubscribed:{$in:[req.user?._id,"$subscribers.subscriber"]},
-      then:true,
-      else:false
+       $addFields:{
+         subscribersCount:{$size:"$subscribers"},
+         channelsSubscribedToCount:{$size:"$subscribedTo"},
+         isSubscribed:{$in:[req.user?._id,"$subscribers.subscriber"]}
+       }
     },
     {
       $project:{
